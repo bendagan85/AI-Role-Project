@@ -1,0 +1,53 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files — ignore all real env files, but DO commit the example
+# (.env.example is a required deliverable listing every required var).
+.env*
+!.env.example
+
+# Internal working docs — kept locally for the build handoff but NOT
+# published to the public repo (contain personal/strategic notes, the
+# company's task PDF, and interview-prep meta). The public design doc is
+# README.md; docs/DESIGN.md, CLAUDE.md and AGENTS.md stay in the repo.
+docs/CONVERSATION_CONTEXT.md
+docs/AI_Developer_Home_Task.pdf
+docs/SPEC.md
+docs/PROGRESS.md
+docs/plans/
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts

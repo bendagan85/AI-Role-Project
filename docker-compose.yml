@@ -1,0 +1,46 @@
+# Optional fully-local dev stack.
+#
+# Most contributors should just use a hosted Supabase free-tier project
+# (fastest setup — see README "Local Development → Hosted Supabase"). This
+# compose file is for people who want to develop fully offline:
+#
+#   - postgres: Postgres 16 with the pgvector extension preinstalled.
+#   - inngest:  the Inngest dev server (durable background jobs for ingestion).
+#
+# Note: this gives you a raw Postgres with pgvector, NOT the full Supabase
+# stack (Auth/Storage/PostgREST). It's enough to run the migrations and the
+# RAG SQL locally; auth/storage still point at a hosted Supabase project.
+# Running the entire Supabase stack locally is out of scope for this template
+# (documented as a deliberate trade-off in the README).
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: ai-coach-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ai_coach
+    ports:
+      - '5432:5432'
+    volumes:
+      - ai_coach_pgdata:/var/lib/postgresql/data
+      # Migrations are applied in order on first boot of an empty volume.
+      - ./supabase/migrations:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d ai_coach']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  inngest:
+    image: inngest/inngest:latest
+    container_name: ai-coach-inngest
+    command: ['inngest', 'dev', '-u', 'http://host.docker.internal:3000/api/inngest']
+    ports:
+      - '8288:8288'
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+
+volumes:
+  ai_coach_pgdata:

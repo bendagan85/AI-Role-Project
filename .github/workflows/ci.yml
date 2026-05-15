@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      # Integration test that proves cross-tenant RLS isolation. It hits the
+      # real Supabase project, so the repository must define these secrets:
+      #   NEXT_PUBLIC_SUPABASE_URL
+      #   NEXT_PUBLIC_SUPABASE_ANON_KEY
+      #   SUPABASE_SERVICE_ROLE_KEY
+      # (Settings → Secrets and variables → Actions). The test provisions and
+      # tears down its own throwaway users, so it's safe to run in CI.
+      - name: Isolation test
+        if: >-
+          ${{ env.NEXT_PUBLIC_SUPABASE_URL != '' &&
+              env.SUPABASE_SERVICE_ROLE_KEY != '' }}
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: pnpm test

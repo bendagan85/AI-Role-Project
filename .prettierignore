@@ -1,0 +1,11 @@
+node_modules
+.next
+out
+build
+dist
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+public
+docs/AI_Developer_Home_Task.pdf
+src/components/ui
