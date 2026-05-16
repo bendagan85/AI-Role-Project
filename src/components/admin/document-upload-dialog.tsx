@@ -175,9 +175,9 @@ export function DocumentUploadDialog() {
   const buttonLabel = (() => {
     if (progress) return `Uploading ${progress.done}/${progress.total}…`;
     if (submitting) return 'Adding…';
-    if (totalItems === 0) return 'Add document';
-    if (totalItems === 1) return 'Add 1 document';
-    return `Add ${totalItems} documents`;
+    if (totalItems === 0) return 'Add knowledge';
+    if (totalItems === 1) return 'Add 1 source';
+    return `Add ${totalItems} sources`;
   })();
 
   return (
@@ -191,13 +191,13 @@ export function DocumentUploadDialog() {
       <DialogTrigger
         render={(props) => (
           <Button {...props} type="button">
-            Add document
+            Add knowledge
           </Button>
         )}
       />
       <DialogContent className="sm:max-w-lg max-h-[85dvh] grid-rows-[auto_minmax(0,1fr)_auto]">
         <DialogHeader>
-          <DialogTitle>Add document</DialogTitle>
+          <DialogTitle>Add knowledge</DialogTitle>
           <DialogDescription>
             Fill in any combination of the three tabs and click submit — each filled tab
             creates one or more documents. Ingestion runs in the background; only training

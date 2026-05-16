@@ -73,7 +73,7 @@ export function DocumentsList({ documents }: { documents: Document[] }) {
           questions until it has something to ground its answers in.
         </p>
         <p className="text-muted-foreground mt-4 text-xs">
-          Use the <strong className="text-foreground">Add document</strong> button at the top
+          Use the <strong className="text-foreground">Add knowledge</strong> button at the top
           right.
         </p>
       </div>
