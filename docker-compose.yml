@@ -1,17 +1,23 @@
-# Optional fully-local dev stack.
+# Optional local infrastructure for offline development.
 #
-# Most contributors should just use a hosted Supabase free-tier project
-# (fastest setup — see README "Local Development → Hosted Supabase"). This
-# compose file is for people who want to develop fully offline:
+# The recommended setup is a hosted Supabase free-tier project (see README
+# "Local Development → Hosted Supabase") — that is also the path the live
+# deployment uses. This compose file is a convenience for the infra layer
+# only:
 #
-#   - postgres: Postgres 16 with the pgvector extension preinstalled.
+#   - postgres: Postgres 16 with the pgvector extension preinstalled, for
+#               poking at the vector/RAG SQL locally.
 #   - inngest:  the Inngest dev server (durable background jobs for ingestion).
 #
-# Note: this gives you a raw Postgres with pgvector, NOT the full Supabase
-# stack (Auth/Storage/PostgREST). It's enough to run the migrations and the
-# RAG SQL locally; auth/storage still point at a hosted Supabase project.
-# Running the entire Supabase stack locally is out of scope for this template
-# (documented as a deliberate trade-off in the README).
+# IMPORTANT — what this is NOT: it is not the full Supabase stack. The app's
+# migrations intentionally reference Supabase's `auth.users` (RLS uses
+# `auth.uid()`), which only exists inside Supabase, so they are NOT
+# auto-applied here — running them against vanilla Postgres would fail. Auth
+# and Storage always point at a hosted Supabase project. Running the entire
+# Supabase stack locally is a deliberate out-of-scope trade-off (README).
+#
+# Use: `docker compose up` to get pgvector + the Inngest dev server, then run
+# the app with `pnpm dev` pointed at a hosted Supabase in .env.local.
 
 services:
   postgres:
@@ -25,8 +31,6 @@ services:
       - '5432:5432'
     volumes:
       - ai_coach_pgdata:/var/lib/postgresql/data
-      # Migrations are applied in order on first boot of an empty volume.
-      - ./supabase/migrations:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U postgres -d ai_coach']
       interval: 5s

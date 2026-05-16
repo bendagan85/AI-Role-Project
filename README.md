@@ -197,11 +197,15 @@ is the stronger signal. (Widget rate-limiting is a simple in-memory throttle.)
 4. `pnpm install && pnpm seed && pnpm dev`. Second terminal:
    `npx inngest-cli@latest dev` (only needed to upload new docs).
 
-### Fully local with Docker
+### Local infra with Docker (optional)
 
-`docker compose up` boots Postgres+pgvector (migrations auto-applied) and the
-Inngest dev server. Auth/Storage still use a hosted Supabase project — the
-full Supabase stack locally is intentionally out of scope.
+`docker compose up` boots a Postgres+pgvector container and the Inngest dev
+server for offline work. Migrations are **not** auto-applied: they reference
+Supabase's `auth.users` (RLS uses `auth.uid()`), which only exists inside
+Supabase — so Auth and Storage always point at a hosted Supabase project,
+and the app is still run with `pnpm dev`. Running the full Supabase stack
+locally is a deliberate out-of-scope trade-off. The recommended (and the
+deployed) path is the hosted-Supabase setup above.
 
 ## Project Structure
 
