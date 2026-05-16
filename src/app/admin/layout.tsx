@@ -31,7 +31,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       <div className="bg-background min-h-screen">
         {/* Dimmed, non-dismissible modal overlay — the workspace is locked
             until the coach configures a valid training/nutrition profile. */}
-        <div className="bg-background/85 fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-4 backdrop-blur-sm sm:p-8">
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 p-4 backdrop-blur-sm sm:p-8">
           <div className="bg-card my-auto w-full max-w-2xl space-y-6 rounded-xl border p-6 shadow-xl sm:p-8">
             <div className="space-y-2">
               <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wide">
