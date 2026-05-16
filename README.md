@@ -25,12 +25,13 @@ question to Marcus vs. Nina returns different, separately-cited answers.
 
 ```bash
 git clone https://github.com/bendagan85/AI-Role-Project.git && cd AI-Role-Project
-cp .env.example .env.local        # fill in Supabase + OpenAI + Anthropic keys
+cp .env.example .env.local        # (.env also works) fill in Supabase + OpenAI + Anthropic keys
 pnpm install
-# apply supabase/migrations/0001..0007 in the Supabase SQL editor (see below)
+# paste supabase/schema.sql into the Supabase SQL editor and Run (one file)
 pnpm seed                          # creates the 2 demo coaches + ingests 20 docs
 pnpm dev                           # http://localhost:3000
-# in a second terminal, for document uploads:
+# OPTIONAL second terminal — only to ingest NEW docs locally
+# (the 2 demo coaches are pre-seeded without it):
 npx inngest-cli@latest dev
 ```
 
@@ -203,7 +204,8 @@ is the stronger signal. (Widget rate-limiting is a simple in-memory throttle.)
 ### Hosted Supabase (recommended)
 
 1. Create a Supabase project. Copy URL + anon + service_role into `.env.local`.
-2. In the SQL Editor, run `supabase/migrations/0001` → `0007` in order.
+2. In the SQL Editor, paste `supabase/schema.sql` and Run — one file,
+   equivalent to applying `migrations/0001`→`0007` in order.
 3. Authentication → disable "Confirm email" (or rely on the dev
    auto-confirm trigger in `0004`).
 4. `pnpm install && pnpm seed && pnpm dev`. Second terminal:
@@ -226,7 +228,7 @@ src/app/            routes: (auth) - admin - app - coaches - widget - api
 src/components/      chat/ - admin/ - auth/ - ui (shadcn)
 src/lib/             rag/ (chunk-embed-retrieve-prompts-classify) -
                      repositories/ - supabase/ - inngest/ - categories
-supabase/migrations/ 0001..0007 (tables - RLS - triggers - storage - category)
+supabase/            schema.sql (one-paste) + migrations/0001..0007 (source)
 seed-data/           strengthlab/ - fuelright/  (10 markdown docs each)
 scripts/             seed.ts - eval.ts        tests/ isolation.test.ts
 evals/golden.ts      docs/DESIGN.md           docker-compose.yml - .github/
@@ -234,8 +236,9 @@ evals/golden.ts      docs/DESIGN.md           docker-compose.yml - .github/
 
 ## Trade-offs & Known Issues
 
-- Migrations are applied manually in the Supabase SQL Editor (no CLI step
-  required to evaluate).
+- Database setup is a single paste of `supabase/schema.sql` into the
+  Supabase SQL Editor (no CLI step required to evaluate; the numbered
+  `supabase/migrations/` files remain the source of truth).
 - Production document upload requires Inngest Cloud env vars
   (`INNGEST_EVENT_KEY`, `INNGEST_SIGNING_KEY`); the demo coaches are
   pre-seeded via inline ingestion so the live app is fully usable regardless.
