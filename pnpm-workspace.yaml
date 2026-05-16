@@ -1,24 +1,29 @@
-# pnpm 10 reads its settings from THIS file (it takes precedence over
-# package.json's "pnpm" field, and over .npmrc for pnpm-specific keys at
-# script-run time).
-#
-# onlyBuiltDependencies: explicitly ALLOW the native packages that need a
-# build step. (It previously held `ignoredBuiltDependencies`, which told
-# pnpm to SKIP them, so a fresh clone failed.)
+# pnpm 10.33 settings. pnpm reads this file (it takes precedence over
+# package.json's "pnpm" field and over .npmrc for pnpm-specific keys).
+
+# allowBuilds — THE mechanism pnpm 10.33 uses to approve dependency build
+# scripts. If a package isn't explicitly `true` here, pnpm refuses to run
+# its install script and (on a fresh clone) auto-injects placeholder
+# entries, leaving the build "ignored" and failing `pnpm seed`/`pnpm dev`.
+# Setting these true makes a fresh clone build them deterministically with
+# no prompt — this is the actual plug-and-play fix.
+allowBuilds:
+  esbuild: true
+  msw: true
+  protobufjs: true
+  sharp: true
+  unrs-resolver: true
+
+# onlyBuiltDependencies — same intent in the older array form, kept for
+# pnpm 9 / other versions that read this instead of allowBuilds.
 onlyBuiltDependencies:
   - esbuild
   - msw
   - protobufjs
   - sharp
   - unrs-resolver
-#
-# verifyDepsBeforeRun: false — do NOT run pnpm's pre-script dependency
-# re-check before `pnpm seed` / `pnpm dev`. That check spawns a sync
-# `pnpm install` whose only failure mode here is the ignored-build-scripts
-# warning being escalated to a hard error (exit 1). Disabling it means the
-# scripts run regardless, which is correct: esbuild's binary ships as an
-# optional dependency and sharp is optional for `next dev`, so the app
-# works even if those post-install scripts are skipped. This is the
-# canonical pnpm-10 location for the setting (mirrors .npmrc as a
-# safety net for any environment where one source isn't honored).
+
+# verifyDepsBeforeRun: false — belt-and-suspenders: never run the
+# pre-script dependency re-check that escalated the ignored-build warning
+# to a hard exit 1. Mirrored in .npmrc.
 verifyDepsBeforeRun: false
