@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { createClient } from '@/lib/supabase/server';
 import { signOut } from '@/app/_actions/auth';
 import { getTenant } from '@/lib/repositories/tenant-repo';
+import { AgentForm } from '@/components/admin/agent-form';
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
@@ -13,6 +14,49 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   if (!user) redirect('/login');
 
   const tenant = await getTenant(supabase, user.id);
+  if (!tenant) redirect('/login');
+
+  // ------------------------------------------------------------------
+  // Forced onboarding gate. A freshly signed-up coach starts with the
+  // default persona, which classifies as 'other' — they would not appear
+  // in the public directory and might not realise they must configure
+  // anything. Until the persona/system-prompt classifies as training or
+  // nutrition, replace the ENTIRE admin (no nav, no children) with the
+  // setup form. Saving runs updateAgentConfig, which already refuses an
+  // off-domain persona, so the only way out is a valid coach profile.
+  // Demo coaches (Marcus/Nina) are seeded classified, so they skip this.
+  // ------------------------------------------------------------------
+  if (tenant.category === 'other') {
+    return (
+      <div className="bg-background min-h-screen">
+        <header className="border-b">
+          <div className="mx-auto flex max-w-2xl items-center justify-between px-6 py-3">
+            <span className="text-lg font-semibold tracking-tight">AI Coach</span>
+            <form action={signOut}>
+              <Button type="submit" variant="ghost" size="sm">
+                Sign out
+              </Button>
+            </form>
+          </div>
+        </header>
+        <main className="mx-auto max-w-2xl space-y-6 px-6 py-10">
+          <div className="space-y-2">
+            <h1 className="text-2xl font-semibold tracking-tight">
+              Finish setting up your coach
+            </h1>
+            <p className="text-muted-foreground text-sm leading-relaxed">
+              Before you can manage knowledge or share your widget, describe who
+              your AI coach is. Your persona and system prompt must clearly
+              describe a <strong>training</strong> or <strong>nutrition</strong>{' '}
+              coach — that&apos;s how clients find you in the public directory.
+              You can refine everything later.
+            </p>
+          </div>
+          <AgentForm tenant={tenant} />
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-background min-h-screen">

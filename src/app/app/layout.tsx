@@ -13,6 +13,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   if (!user) redirect('/login');
 
   const tenant = await getTenant(supabase, user.id);
+  if (!tenant) redirect('/login');
+  // Coaches who haven't completed the onboarding gate (persona still
+  // classifies as 'other') can't use the test chat either — send them
+  // back to /admin, which renders the forced setup form.
+  if (tenant.category === 'other') redirect('/admin');
 
   return (
     <div className="bg-background flex min-h-screen flex-col">
