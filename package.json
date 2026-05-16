@@ -62,5 +62,14 @@
     "typescript": "^5",
     "vitest": "^4.1.6",
     "ws": "^8.20.1"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "msw",
+      "protobufjs",
+      "sharp",
+      "unrs-resolver"
+    ]
   }
 }
