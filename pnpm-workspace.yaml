@@ -1,3 +1,12 @@
-ignoredBuiltDependencies:
+# pnpm 10 reads dependency-build policy from THIS file (it takes precedence
+# over package.json's "pnpm" field). It previously held
+# `ignoredBuiltDependencies`, which told pnpm to SKIP these native build
+# scripts — so on a fresh clone `pnpm install` left them unbuilt and the
+# pre-run deps check failed `pnpm seed` / `pnpm dev`. We explicitly ALLOW
+# (allowlist) the packages that legitimately need a build step instead.
+onlyBuiltDependencies:
+  - esbuild
+  - msw
+  - protobufjs
   - sharp
   - unrs-resolver
