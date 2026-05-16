@@ -195,17 +195,21 @@ export function DocumentUploadDialog() {
           </Button>
         )}
       />
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg max-h-[85dvh] grid-rows-[auto_minmax(0,1fr)_auto]">
         <DialogHeader>
           <DialogTitle>Add document</DialogTitle>
           <DialogDescription>
-            Fill in any combination of the three tabs and click submit — each filled tab will
-            create one (or more) document(s). Ingestion runs in the background once Phase 3 is
-            wired up.
+            Fill in any combination of the three tabs and click submit — each filled tab
+            creates one or more documents. Ingestion runs in the background; only training
+            and nutrition material is accepted.
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs value={mode} onValueChange={(v) => setMode(v as Mode)}>
+        <Tabs
+          value={mode}
+          onValueChange={(v) => setMode(v as Mode)}
+          className="-mx-1 min-h-0 overflow-y-auto px-1"
+        >
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="file">
               File{files.length > 0 && <span className="ml-1 text-xs">· {files.length}</span>}
@@ -311,6 +315,7 @@ export function DocumentUploadDialog() {
                 onChange={(e) => setTextContent(e.target.value)}
                 placeholder="Paste the content here…"
                 rows={8}
+                className="max-h-[40dvh] overflow-y-auto"
               />
               <p className="text-muted-foreground text-xs">
                 {textContent.length.toLocaleString()} chars (min 20)

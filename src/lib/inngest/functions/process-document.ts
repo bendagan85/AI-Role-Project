@@ -14,6 +14,7 @@ import {
 import { chunkText } from '@/lib/rag/chunk';
 import { embedTexts } from '@/lib/rag/embed';
 import { extractDocx, extractPdf, extractUrl, pickExtractor } from '@/lib/rag/extract';
+import { classifyDocumentRelevance } from '@/lib/rag/classify';
 
 export const processDocument = inngest.createFunction(
   {
@@ -84,6 +85,26 @@ export const processDocument = inngest.createFunction(
       if (!rawText || rawText.trim().length < 20) {
         throw new NonRetriableError('Extracted text is empty or too short');
       }
+
+      // -----------------------------------------------------------------
+      // Step 1b: content-relevance gate. This KB is fitness/nutrition only.
+      // Reject off-domain material BEFORE embedding so it never enters
+      // retrieval (the agent grounds solely in retrieved chunks, so an
+      // off-domain doc would otherwise get answered). A training coach may
+      // legitimately hold nutrition docs and vice-versa, so we reject only
+      // when the document itself is neither. classifyDocumentRelevance
+      // fails open on a classifier outage (never drops a real upload).
+      // -----------------------------------------------------------------
+      await step.run('relevance-gate', async () => {
+        const verdict = await classifyDocumentRelevance(rawText);
+        if (verdict.category === 'other') {
+          throw new NonRetriableError(
+            'Document rejected: its content is not about training or nutrition' +
+              (verdict.reason ? ` (${verdict.reason})` : '') +
+              '. This knowledge base only accepts fitness and nutrition material.',
+          );
+        }
+      });
 
       // -----------------------------------------------------------------
       // Step 2: chunk + embed (this is the work-heavy step).

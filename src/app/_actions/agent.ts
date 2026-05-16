@@ -3,9 +3,14 @@
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
-import { updateTenantConfig, updateTenantCategory } from '@/lib/repositories/tenant-repo';
+import {
+  getTenant,
+  updateTenantConfig,
+  updateTenantCategory,
+} from '@/lib/repositories/tenant-repo';
 import { AVAILABLE_MODELS } from '@/lib/agent-models';
-import { classifyCoach } from '@/lib/rag/classify';
+import { classifyCoachRaw } from '@/lib/rag/classify';
+import type { CoachCategory } from '@/lib/categories';
 
 const agentConfigSchema = z.object({
   name: z.string().min(1, 'Required').max(80),
@@ -17,8 +22,6 @@ const agentConfigSchema = z.object({
 });
 
 export type AgentConfigInput = z.infer<typeof agentConfigSchema>;
-
-import type { CoachCategory } from '@/lib/categories';
 
 export type AgentUpdateResult =
   | { ok: true; category: CoachCategory }
@@ -38,6 +41,32 @@ export async function updateAgentConfig(input: AgentConfigInput): Promise<AgentU
     return { ok: false, error: 'Unauthenticated' };
   }
 
+  // Classify FIRST so an off-domain persona is blocked before anything is
+  // persisted. classifyCoachRaw throws on a model/transport error; we treat
+  // "confidently classified as other" as a hard block, but a classifier
+  // outage as fail-open — never lock a coach out of their own form over an
+  // Anthropic blip.
+  let classified: CoachCategory | null = null;
+  try {
+    classified = await classifyCoachRaw(
+      parsed.data.agent_persona,
+      parsed.data.agent_system_prompt,
+      parsed.data.name,
+    );
+  } catch (err) {
+    console.error('[updateAgentConfig] classifier unavailable (failing open):', err);
+  }
+
+  if (classified === 'other') {
+    return {
+      ok: false,
+      error:
+        'Your persona and system prompt must clearly describe a training or ' +
+        'nutrition coach so clients can find you. Add domain-specific wording ' +
+        '(e.g. strength training, sports nutrition) and save again.',
+    };
+  }
+
   try {
     await updateTenantConfig(supabase, user.id, parsed.data);
   } catch (err) {
@@ -47,19 +76,19 @@ export async function updateAgentConfig(input: AgentConfigInput): Promise<AgentU
     };
   }
 
-  // Re-classify the coach into Training / Nutrition / Other based on the
-  // updated persona + system prompt. Awaited so /admin and / reflect the
-  // new category immediately on next render. Falls back to 'other' on any
-  // error inside classifyCoach itself.
-  let category: CoachCategory = 'other';
+  // Persist the category. On classifier success use the fresh value; if the
+  // classifier was unavailable, keep the coach's existing category rather
+  // than downgrading a working coach to 'other' on an API blip.
+  let category: CoachCategory = classified ?? 'other';
   try {
-    category = await classifyCoach(
-      parsed.data.agent_persona,
-      parsed.data.agent_system_prompt,
-    );
-    await updateTenantCategory(supabase, user.id, category);
+    if (classified) {
+      await updateTenantCategory(supabase, user.id, classified);
+    } else {
+      const tenant = await getTenant(supabase, user.id);
+      category = tenant?.category ?? 'other';
+    }
   } catch (err) {
-    console.error('[updateAgentConfig] classify failed (non-fatal):', err);
+    console.error('[updateAgentConfig] category persist failed (non-fatal):', err);
   }
 
   revalidatePath('/admin/agent');

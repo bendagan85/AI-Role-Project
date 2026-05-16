@@ -1,25 +1,42 @@
 import { NextResponse, type NextRequest } from 'next/server';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
 import { inngest } from '@/lib/inngest/client';
 import {
   createDocument,
   deleteDocument,
+  updateDocumentStatus,
   storagePath,
   type Document,
   type DocumentSourceType,
 } from '@/lib/repositories/document-repo';
 
-async function dispatchIngestion(doc: Document): Promise<void> {
+// File uploads (up to 25MB) + storage write can be slow; give the handler
+// a real budget rather than the short serverless default.
+export const runtime = 'nodejs';
+export const maxDuration = 60;
+
+async function dispatchIngestion(
+  supabase: SupabaseClient,
+  doc: Document,
+): Promise<void> {
   try {
     await inngest.send({
       name: 'document.ingest',
       data: { tenantId: doc.tenant_id, documentId: doc.id },
     });
   } catch (err) {
-    // Don't fail the upload if Inngest dispatch fails — the row exists and
-    // can be re-triggered manually. We just log.
+    // The row exists and can be re-triggered, but don't leave it stuck at
+    // 'pending' with no explanation — surface it as failed so the coach
+    // sees a reason and the Re-ingest button appears.
     console.error('[ingest] inngest.send failed:', err);
+    await updateDocumentStatus(supabase, doc.tenant_id, doc.id, {
+      status: 'failed',
+      error_message:
+        'Could not queue ingestion — the background job service was ' +
+        'unreachable. Click Re-ingest to retry.',
+    }).catch(() => {});
   }
 }
 
@@ -105,7 +122,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    await dispatchIngestion(doc);
+    await dispatchIngestion(supabase, doc);
     return NextResponse.json({ document: doc }, { status: 201 });
   }
 
@@ -133,7 +150,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           source_type: 'url',
           source_url: parsed.data.url,
         });
-        await dispatchIngestion(doc);
+        await dispatchIngestion(supabase, doc);
         return NextResponse.json({ document: doc }, { status: 201 });
       } catch (err) {
         return NextResponse.json(
@@ -179,7 +196,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           { status: 500 },
         );
       }
-      await dispatchIngestion(doc);
+      await dispatchIngestion(supabase, doc);
       return NextResponse.json({ document: doc }, { status: 201 });
     }
 

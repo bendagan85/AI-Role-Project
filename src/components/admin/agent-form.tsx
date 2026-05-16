@@ -67,15 +67,13 @@ export function AgentForm({ tenant }: { tenant: Tenant }) {
       toast.error(result.error);
       return;
     }
-    if (result.category === 'other') {
-      toast.warning(
-        'Saved — but your persona is too vague to fit Training or Nutrition. ' +
-          'Your coach will not appear in the public directory until you add domain-specific wording.',
-        { duration: 8000 },
-      );
-    } else {
+    if (result.category === 'training' || result.category === 'nutrition') {
       const label = result.category === 'training' ? 'Training' : 'Nutrition';
       toast.success(`Saved · classified as ${label}`);
+    } else {
+      // Only reachable if the classifier was unavailable at save time; the
+      // config was still saved and the existing category preserved.
+      toast.success('Saved');
     }
     startTransition(() => {
       router.push('/admin');
