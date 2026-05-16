@@ -29,39 +29,44 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   if (tenant.category === 'other') {
     return (
       <div className="bg-background min-h-screen">
-        {/* Dimmed, non-dismissible modal overlay — the workspace is locked
-            until the coach configures a valid training/nutrition profile. */}
-        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 p-4 backdrop-blur-sm sm:p-8">
-          <div className="bg-card my-auto w-full max-w-2xl space-y-6 rounded-xl border p-6 shadow-xl sm:p-8">
-            <div className="space-y-2">
-              <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wide">
-                One step before you start
-              </p>
-              <h1 className="text-2xl font-semibold tracking-tight">
-                Set up your coach to continue
-              </h1>
-              <p className="text-muted-foreground text-sm leading-relaxed">
-                Your workspace is locked until you configure your coach. Update
-                the <strong>Persona</strong> and <strong>System prompt</strong>{' '}
-                below to clearly describe a <strong>training</strong> or{' '}
-                <strong>nutrition</strong> coach — matching the assistant you
-                want to build. We classify it on save: a generic or off-topic
-                profile is rejected, and you won&apos;t appear in the public
-                directory until it passes.
-              </p>
-            </div>
-            <AgentForm tenant={tenant} />
-            <div className="border-t pt-4 text-center">
-              <form action={signOut}>
-                <Button
-                  type="submit"
-                  variant="ghost"
-                  size="sm"
-                  className="text-muted-foreground"
-                >
-                  Sign out
-                </Button>
-              </form>
+        {/* Dimmed, non-dismissible modal. The OUTER element is the scroll
+            container; a separate min-h-full flex wrapper centres the card
+            when it fits and lets the whole thing (including the heading at
+            the top) scroll when it's taller than the viewport. Doing both
+            scroll + centering on one element clipped the top — the bug. */}
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm">
+          <div className="flex min-h-full items-center justify-center p-4 sm:p-8">
+            <div className="bg-card w-full max-w-2xl space-y-6 rounded-xl border p-6 shadow-xl sm:p-8">
+              <div className="space-y-2">
+                <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wide">
+                  One step before you start
+                </p>
+                <h1 className="text-2xl font-semibold tracking-tight">
+                  Set up your coach to continue
+                </h1>
+                <p className="text-muted-foreground text-sm leading-relaxed">
+                  Your workspace is locked until you configure your coach.
+                  Update the <strong>Persona</strong> and{' '}
+                  <strong>System prompt</strong> below to clearly describe a{' '}
+                  <strong>training</strong> or <strong>nutrition</strong> coach
+                  — matching the assistant you want to build. We classify it on
+                  save: a generic or off-topic profile is rejected, and you
+                  won&apos;t appear in the public directory until it passes.
+                </p>
+              </div>
+              <AgentForm tenant={tenant} />
+              <div className="border-t pt-4 text-center">
+                <form action={signOut}>
+                  <Button
+                    type="submit"
+                    variant="ghost"
+                    size="sm"
+                    className="text-muted-foreground"
+                  >
+                    Sign out
+                  </Button>
+                </form>
+              </div>
             </div>
           </div>
         </div>
