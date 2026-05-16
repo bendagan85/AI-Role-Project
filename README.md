@@ -141,9 +141,21 @@ surface real retrieval behaviour rather than a toy demo.
    language, brief small-talk) + retrieved context. Streamed from Claude;
    citations are derived from retrieval, not the model.
 
+### Recommendations design
+
+Recommendations are **prompt-driven (implicit)**, not a separate tool: the
+grounding instructions tell the model that when the user asks "what should I
+do next / where do I start", it should surface and rank the most relevant
+items from the retrieved context (e.g. Marcus suggesting "Starting Strength
+Overview → Progressive Overload"). This keeps one retrieval path and one LLM
+call. The deliberate alternative not built — a dedicated `get_recommendations`
+tool doing a broader second retrieval — is listed under "What I'd do next";
+for these KB sizes the implicit approach already produces good, cited
+next-step suggestions (verified by the eval harness).
+
 ## Multi-Tenant Isolation
 
-Three layers (`docs/SPEC.md` §8):
+Three layers:
 
 1. **Database — RLS.** Every table has a policy `tenant_id = auth.uid()`.
    Postgres refuses cross-tenant reads even if app code has a bug.
@@ -217,7 +229,7 @@ src/lib/             rag/ (chunk-embed-retrieve-prompts-classify) -
 supabase/migrations/ 0001..0007 (tables - RLS - triggers - storage - category)
 seed-data/           strengthlab/ - fuelright/  (10 markdown docs each)
 scripts/             seed.ts - eval.ts        tests/ isolation.test.ts
-evals/golden.ts      docs/ SPEC - DESIGN - CONVERSATION_CONTEXT - PROGRESS
+evals/golden.ts      docs/DESIGN.md           docker-compose.yml - .github/
 ```
 
 ## Trade-offs & Known Issues
