@@ -9,7 +9,7 @@ the box.
 
 ## Live Demo
 
-🌐 **Live URL:** _set after Vercel deploy_ — `https://<your-app>.vercel.app`
+🌐 **Live URL:** **https://ai-role-project.vercel.app**
 
 | Workspace | Domain | Email | Password |
 |---|---|---|---|
@@ -24,7 +24,7 @@ question to Marcus vs. Nina returns different, separately-cited answers.
 ## Quickstart
 
 ```bash
-git clone <repo-url> && cd ai-engineer-project
+git clone https://github.com/bendagan85/AI-Role-Project.git && cd AI-Role-Project
 cp .env.example .env.local        # fill in Supabase + OpenAI + Anthropic keys
 pnpm install
 # apply supabase/migrations/0001..0007 in the Supabase SQL editor (see below)
