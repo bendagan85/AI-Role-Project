@@ -23,17 +23,26 @@ question to Marcus vs. Nina returns different, separately-cited answers.
 
 ## Quickstart
 
+**Fully local — Docker + two LLM keys, nothing else.** The only values you
+supply are an OpenAI and an Anthropic key (any RAG app needs these); the
+database, auth, storage, schema and two demo accounts come up by themselves.
+
 ```bash
 git clone https://github.com/bendagan85/AI-Role-Project.git && cd AI-Role-Project
-cp .env.example .env.local        # (.env also works) fill in Supabase + OpenAI + Anthropic keys
+cp .env.example .env.local         # add only OPENAI_API_KEY + ANTHROPIC_API_KEY
+npx supabase start                 # Postgres+Auth+Storage in Docker, migrations auto-applied
 pnpm install
-# paste supabase/schema.sql into the Supabase SQL editor and Run (one file)
-pnpm seed                          # creates the 2 demo coaches + ingests 20 docs
+pnpm seed                          # 2 demo coaches + 20 docs (into local Supabase)
 pnpm dev                           # http://localhost:3000
 # OPTIONAL second terminal — only to ingest NEW docs locally
 # (the 2 demo coaches are pre-seeded without it):
 npx inngest-cli@latest dev
 ```
+
+`.env.example` already contains the Supabase CLI's well-known local
+defaults, so it works as-is. Stop the stack with `npx supabase stop`.
+Prefer a hosted Supabase (what the live deploy uses)? See
+[Local Development](#local-development) Option B.
 
 ## What This Is
 
@@ -201,25 +210,39 @@ is the stronger signal. (Widget rate-limiting is a simple in-memory throttle.)
 
 ## Local Development
 
-### Hosted Supabase (recommended)
+**What a fresh clone actually needs:** Docker running, Node + pnpm, and an
+OpenAI key + an Anthropic key. That's it — no Supabase account, no manual
+SQL, no cloud setup. (LLM keys are unavoidable: every RAG app needs them.)
 
-1. Create a Supabase project. Copy URL + anon + service_role into `.env.local`.
-2. In the SQL Editor, paste `supabase/schema.sql` and Run — one file,
-   equivalent to applying `migrations/0001`→`0007` in order.
-3. Authentication → disable "Confirm email" (or rely on the dev
-   auto-confirm trigger in `0004`).
-4. `pnpm install && pnpm seed && pnpm dev`. Second terminal:
-   `npx inngest-cli@latest dev` (only needed to upload new docs).
+### Option A — Fully local (recommended for cloners)
 
-### Local infra with Docker (optional)
+The Supabase CLI runs the entire stack (Postgres + Auth + Storage + Studio)
+in Docker and **auto-applies `supabase/migrations/`** on start.
 
-`docker compose up` boots a Postgres+pgvector container and the Inngest dev
-server for offline work. Migrations are **not** auto-applied: they reference
-Supabase's `auth.users` (RLS uses `auth.uid()`), which only exists inside
-Supabase — so Auth and Storage always point at a hosted Supabase project,
-and the app is still run with `pnpm dev`. Running the full Supabase stack
-locally is a deliberate out-of-scope trade-off. The recommended (and the
-deployed) path is the hosted-Supabase setup above.
+1. `cp .env.example .env.local`, then add `OPENAI_API_KEY` +
+   `ANTHROPIC_API_KEY`. The Supabase values are pre-filled with the CLI's
+   standard local defaults — leave them.
+2. `npx supabase start` — boots the stack, applies all 7 migrations. (If
+   `supabase status` ever shows different keys, copy them into `.env.local`;
+   the defaults are stable across CLI installs.)
+3. `pnpm install && pnpm seed && pnpm dev` → http://localhost:3000.
+4. Optional second terminal `npx inngest-cli@latest dev` — only to ingest
+   *new* docs; the two demo coaches are seeded without it.
+5. `npx supabase stop` when done. Studio (DB browser): http://127.0.0.1:54323.
+
+### Option B — Hosted Supabase (what the live deploy uses)
+
+1. Create a Supabase project. Put URL + anon + service_role into `.env.local`.
+2. SQL Editor → paste `supabase/schema.sql` and Run (one file = all 7
+   migrations in order).
+3. Auth → disable "Confirm email" (or rely on the dev auto-confirm trigger
+   in migration `0004`).
+4. `pnpm install && pnpm seed && pnpm dev`.
+
+The deployed Vercel app uses Option B (hosted Supabase, Inngest Cloud for
+ingestion). The legacy `docker-compose.yml` (infra-only Postgres+Inngest)
+predates the Supabase-CLI path and is kept only as a reference — Option A
+supersedes it.
 
 ## Project Structure
 
@@ -236,9 +259,10 @@ evals/golden.ts      docs/DESIGN.md           docker-compose.yml - .github/
 
 ## Trade-offs & Known Issues
 
-- Database setup is a single paste of `supabase/schema.sql` into the
-  Supabase SQL Editor (no CLI step required to evaluate; the numbered
-  `supabase/migrations/` files remain the source of truth).
+- Database setup has zero manual steps on the local path: `npx supabase
+  start` auto-applies `supabase/migrations/`. The hosted path is a single
+  paste of the generated `supabase/schema.sql`. The numbered migration
+  files remain the source of truth.
 - Production document upload requires Inngest Cloud env vars
   (`INNGEST_EVENT_KEY`, `INNGEST_SIGNING_KEY`); the demo coaches are
   pre-seeded via inline ingestion so the live app is fully usable regardless.
