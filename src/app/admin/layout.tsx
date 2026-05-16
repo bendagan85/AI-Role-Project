@@ -29,31 +29,42 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   if (tenant.category === 'other') {
     return (
       <div className="bg-background min-h-screen">
-        <header className="border-b">
-          <div className="mx-auto flex max-w-2xl items-center justify-between px-6 py-3">
-            <span className="text-lg font-semibold tracking-tight">AI Coach</span>
-            <form action={signOut}>
-              <Button type="submit" variant="ghost" size="sm">
-                Sign out
-              </Button>
-            </form>
+        {/* Dimmed, non-dismissible modal overlay — the workspace is locked
+            until the coach configures a valid training/nutrition profile. */}
+        <div className="bg-background/85 fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-4 backdrop-blur-sm sm:p-8">
+          <div className="bg-card my-auto w-full max-w-2xl space-y-6 rounded-xl border p-6 shadow-xl sm:p-8">
+            <div className="space-y-2">
+              <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wide">
+                One step before you start
+              </p>
+              <h1 className="text-2xl font-semibold tracking-tight">
+                Set up your coach to continue
+              </h1>
+              <p className="text-muted-foreground text-sm leading-relaxed">
+                Your workspace is locked until you configure your coach. Update
+                the <strong>Persona</strong> and <strong>System prompt</strong>{' '}
+                below to clearly describe a <strong>training</strong> or{' '}
+                <strong>nutrition</strong> coach — matching the assistant you
+                want to build. We classify it on save: a generic or off-topic
+                profile is rejected, and you won&apos;t appear in the public
+                directory until it passes.
+              </p>
+            </div>
+            <AgentForm tenant={tenant} />
+            <div className="border-t pt-4 text-center">
+              <form action={signOut}>
+                <Button
+                  type="submit"
+                  variant="ghost"
+                  size="sm"
+                  className="text-muted-foreground"
+                >
+                  Sign out
+                </Button>
+              </form>
+            </div>
           </div>
-        </header>
-        <main className="mx-auto max-w-2xl space-y-6 px-6 py-10">
-          <div className="space-y-2">
-            <h1 className="text-2xl font-semibold tracking-tight">
-              Finish setting up your coach
-            </h1>
-            <p className="text-muted-foreground text-sm leading-relaxed">
-              Before you can manage knowledge or share your widget, describe who
-              your AI coach is. Your persona and system prompt must clearly
-              describe a <strong>training</strong> or <strong>nutrition</strong>{' '}
-              coach — that&apos;s how clients find you in the public directory.
-              You can refine everything later.
-            </p>
-          </div>
-          <AgentForm tenant={tenant} />
-        </main>
+        </div>
       </div>
     );
   }

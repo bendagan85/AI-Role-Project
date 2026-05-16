@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/auth/password-input';
 import { createClient } from '@/lib/supabase/client';
 
 const signupSchema = z.object({
@@ -69,8 +70,7 @@ export function SignupForm() {
         {errors.email && <p className="text-destructive text-xs">{errors.email.message}</p>}
       </div>
       <div className="space-y-1">
-        <Input
-          type="password"
+        <PasswordInput
           placeholder="Password (min 8 chars)"
           autoComplete="new-password"
           {...register('password')}
